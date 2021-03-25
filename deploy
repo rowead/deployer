@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+const settings = require('./args')
+const {cleanUp, createRelease, runPostCommand} = require('./utils')
+
+// @TODO: check for existence of file first
+// Load deployment module
+const deploy = require('./deploy-method-' + settings.deployMethod)
+
+if (settings.debug) {
+  console.log(settings)
+}
+
+// Use process.exit code to fail release and perform cleanup
+process.on('exit', cleanUp);
+
+(async () => {
+  try {
+    await createRelease()
+    await deploy()
+    if (settings.postCommand) {
+      for (const cmd of settings.postCommand) {
+        await runPostCommand(cmd)
+      }
+    }
+    // If we reach this line it was a successful release
+    process.exit(0)
+  } catch (error) {
+    console.log(error)
+    process.exit(1)
+  }
+})()

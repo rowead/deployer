@@ -14,7 +14,7 @@
     "object-scan": "^13.0.1",
     "semver": "^7.3.4",
     "simple-git": "^2.35.1",
-    "yargs": "^15.3.1"
+    "yargs": "^15.4.1"
   },
   "devDependencies": {},
   "scripts": {

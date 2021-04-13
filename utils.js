@@ -52,7 +52,7 @@ function cleanupReleases(failure) {
 
     // @TODO: test with open files
     fs.unlink(path.join(settings.path, settings.currentFolder))
-    fs.symlinkSync(path.join(settings.path, '../', settings.releasesFolder, settings.release), path.join(settings.path, settings.currentFolder), 'dir')
+    fs.symlinkSync(path.resolve(path.join(settings.path, settings.releasesFolder, settings.release)), path.join(settings.path, settings.currentFolder), 'dir')
   } else {
     // remove release that we are working on
     // @TODO: only remove release if it exists and output debug info

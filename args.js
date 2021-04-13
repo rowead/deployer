@@ -7,8 +7,12 @@ const argv = require('yargs')
     type: 'string',
     default: 'default'
   })
+  .option('aws-s3-bucket', {
+    describe: "Name of AWS Bucket" ,
+    type: 'string'
+  })
   .option('aws-s3-path', {
-    describe: "Path to folder within WAM's Asset Sync bucket" ,
+    describe: "Path to folder within bucket" ,
     type: 'string'
   })
   .option( 'current-folder', {

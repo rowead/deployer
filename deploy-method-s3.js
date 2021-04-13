@@ -28,7 +28,7 @@ async function deploy(local = false) {
 
   if (settings.awsProfile && settings.awsS3Path) {
     try {
-      let result = execSync(`"aws" s3 sync --only-show-errors --delete --profile=${settings.awsProfile} s3://museum.wa.gov.au.asset-sync/${settings.awsS3Path} ${getNewReleasePath()}${path.sep}`, {shell: "/bin/bash"})
+      let result = execSync(`"aws" s3 sync --only-show-errors --delete --profile=${settings.awsProfile} s3://${settings.awsS3Bucket}/${settings.awsS3Path} ${getNewReleasePath()}${path.sep}`, {shell: "/bin/bash"})
       console.log(result.toString())
     }
     catch (e) {

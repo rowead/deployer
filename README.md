@@ -1,0 +1,65 @@
+# Deployer
+
+A cross-platform code and asset deployment script that uses a "capistrano" like release technique for atomic deployments.
+
+## Features
+
+- Deploy from a git repo or Amazon S3 bucket.
+- Specify a git branch or semver.
+- Exit codes can be used in your own scripts to handle service restarts etc.
+
+## Requirements
+
+- nodejs.
+- The permissions to create symlinks on Windows.
+- aws-cli required for syncing from S3 https://aws.amazon.com/cli/
+
+## Installation
+
+- Clone this repo.
+- Run:
+```
+npm install
+```
+
+### Folder structure
+```
+/var/www/html/deployment/
+  current -> releases/20210413115707 (always points to current "active" release)
+  releases/
+    20210413115705
+    20210413115707
+  repo/ (local git repo that is then checked out into a release)
+  shared/
+```
+
+You can specify any number of shared folders that will always be available withing the "current release".
+Symlinks will be created within the current release and the contents of those folders can be managed however you wan't.
+This is typically used to deploy large asset files outside of git or to allow persistent files created from within
+your app.
+
+For the above example, you would set apache's document root to /var/www/html/deployment/current and if you used the argument
+"--shared-folder=foo", it would be available at http://localhost/foo
+
+Also see
+```shell
+./deploy --help
+```
+
+POSIX:
+```shell
+./deploy --git-repo=private-git-repo.com/my-git-repo.git \
+  --user=myusername \
+  --pass=mypassword \
+  --git-branch=~7.1 \
+  --deploy-method=git \
+  --path=/var/www/html/deployment \ 
+  --post=command="npm install" \
+  --post-command="npm audit" \
+  --shared-folder=foo
+```
+
+Windows:
+```powershell
+node.exe .\deploy --git-repo=private-git-repo.com/my-git-repo.git --user=myusername --pass=mypassword --git-branch=master --deploy-method=git --post=command="npm install" --post-command="npm audit" --shared-folder=foo --path=C:\apache\htdocs\deployment --post=command="npm install"
+```

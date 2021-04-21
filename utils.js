@@ -104,7 +104,11 @@ async function createRelease() {
 }
 
 function currentReleaseExists() {
-  return fs.lstatSync(path.join(settings.path, settings.currentFolder)).isSymbolicLink()
+  try {
+    return fs.lstatSync(path.join(settings.path, settings.currentFolder)).isSymbolicLink()
+  } catch (error) {
+    return false
+  }
 }
 
 function dirExists(path) {

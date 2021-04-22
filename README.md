@@ -28,15 +28,25 @@ npm install
   current -> releases/20210413115707 (always points to current "active" release)
   releases/
     20210413115705
-    20210413115707
-  repo/ (local git repo that is then checked out into a release)
+    20210413115707/
+      foo -> /var/www/html/deployment/shared/foo
+      bar -> /var/www/html/deployment/shared/bar
+      config/
+        local.yaml -> -> /var/www/html/deployment/shared/config/local.yaml
+      ... (the rest of the files deployed)
+  repo/ (local bare git repo that is then checked out into a release)
   shared/
+    foo/
+    bar/
+    config/local.yaml
 ```
 
-You can specify any number of shared folders that will always be available withing the "current release".
-Symlinks will be created within the current release and the contents of those folders can be managed however you wan't.
+You can specify any number of shared folders and files that will always be available withing the "current release".
+Symlinks will be created within the current release and the contents of those folders can be managed however you wan't but **make sure they do not exist in the source that is being deployed**.
 This is typically used to deploy large asset files outside of git or to allow persistent files created from within
 your app.
+
+Shared files will only be linked to if they exist withing the "shared" folder. They can be within a folder that is in the source but should really be an ignored file and the file itself should not exist in the source. Folders in the path will be created if they do not already exist in the release.
 
 For the above example, you would set apache's document root to /var/www/html/deployment/current and if you used the argument
 "--shared-folder=foo", it would be available at http://localhost/foo
@@ -57,9 +67,21 @@ POSIX:
   --post=command="npm install" \
   --post-command="npm audit" \
   --shared-folder=foo
+  --shared-folder=bar
+  --shared-file="config/local.yaml"
 ```
 
 Windows:
 ```powershell
-node.exe .\deploy --git-repo=private-git-repo.com/my-git-repo.git --user=myusername --pass=mypassword --git-branch=master --deploy-method=git --post=command="npm install" --post-command="npm audit" --shared-folder=foo --path=C:\apache\htdocs\deployment --post=command="npm install"
+node.exe .\deploy --git-repo=private-git-repo.com/my-git-repo.git `
+  --user=myusername `
+  --pass=mypassword `
+  --git-branch=master `
+  --deploy-method=git `
+  --post=command="npm install" `
+  --post-command="npm audit" `
+  --shared-folder=foo `
+  --shared-file="config\local.yaml" `
+  --path="C:\apache\htdocs\deployment" `
+  --post=command="npm install"
 ```

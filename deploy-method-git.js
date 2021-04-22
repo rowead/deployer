@@ -1,6 +1,6 @@
 const settings = require('./args.js')
 const fs = require('fs')
-const { createDir, getNewReleasePath, getPath, dirExists } = require('./utils.js')
+const { createDir, currentReleaseExists, getCurrentReleasePath, getNewReleasePath, getPath, dirExists } = require('./utils.js')
 const path = require('path')
 const semver = require('semver')
 const simpleGit = require('simple-git')
@@ -51,13 +51,8 @@ async function deploy(local = false) {
       }
     }
 
-    if (!dirExists(path.join(getPath(), 'shared')) && !createDir(path.join(getPath(), 'shared'))) {
-      console.log('Error setting up shared folders')
-      process.exit(1)
-    }
-
     try {
-      await gitRepo.fetch({'--depth': 1})
+      await gitRepo.fetch(['--all', '--tags'])
       let gitBranch = settings.gitBranch
       if (semver.validRange(gitBranch)) {
         let tags = await gitRepo.tags()
@@ -67,6 +62,31 @@ async function deploy(local = false) {
           process.exit(1)
         } else {
           console.log('semver chosen:', gitBranch)
+        }
+      }
+      if (!settings.force) {
+        if (currentReleaseExists()) {
+          const currentRepo = simpleGit(getCurrentReleasePath())
+          if (await currentRepo.cwd(getCurrentReleasePath()).checkIsRepo()) {
+            const tag = await currentRepo.tag(['--points-at'])
+            console.log('tag:')
+            console.log(tag)
+            if (gitBranch === tag.trim()) {
+              console.log('no update needed')
+              process.exit(2)
+            }
+            const currentRev = await currentRepo.revparse('@')
+            const gitRev = await gitRepo.revparse(gitBranch)
+            console.log("Revs:")
+            console.log(currentRev)
+            console.log(gitRev)
+            if (currentRev === gitRev) {
+              console.log('Revs match, no update needed')
+              process.exit(2)
+            }
+          } else {
+            console.log('current is not a git repository')
+          }
         }
       }
 
@@ -85,30 +105,7 @@ async function deploy(local = false) {
       console.log(error)
       process.exit(1)
     }
-    
-    if (settings.sharedFolder) {
-      for (const sharedFolder of settings.sharedFolder) {
-        if (dirExists(path.join(settings.path, 'shared', sharedFolder)) || createDir(path.join(settings.path, 'shared', sharedFolder))) {
-          try {
-            fs.symlinkSync(
-              path.resolve(path.join(settings.path, 'shared', sharedFolder)),
-              path.join(settings.path, settings.releasesFolder, settings.release, sharedFolder),
-              'dir'
-            )
-          }
-          catch (error) {
-            console.log(error)
-            process.exit(1)
-          }
-        }
-        else {
-          console.log("Error shared folder doesn't exist or not a folder or symlink")
-          process.exit(1)
-        }
-      }
-    }
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error)
     process.exit(1)
   }

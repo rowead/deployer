@@ -50,9 +50,25 @@ function cleanupReleases(failure) {
     })
     console.log(remove)
 
-    // @TODO: test with open files
-    fs.unlink(path.join(settings.path, settings.currentFolder))
-    fs.symlinkSync(path.resolve(path.join(settings.path, settings.releasesFolder, settings.release)), path.join(settings.path, settings.currentFolder), 'dir')
+    if (dirExists(path.join(settings.path, settings.currentFolder))) {
+      try {
+        fs.unlinkSync(path.join(settings.path, settings.currentFolder))
+      } catch (error) {
+        console.log('error removing current symlink')
+        process.exitCode(1)
+        return
+      }
+    }
+    try {
+      fs.symlinkSync(path.resolve(
+        path.join(settings.path, settings.releasesFolder, settings.release)),
+        path.join(settings.path, settings.currentFolder), 'dir')
+    } catch (error) {
+      console.log('error creating symlink')
+      process.exitCode(1)
+      // @TODO: try and recreate current symlink
+    }
+
   } else {
     // remove release that we are working on
     // @TODO: only remove release if it exists and output debug info
@@ -141,12 +157,71 @@ function getPath() {
   return fs.realpathSync(path.resolve(settings.path))
 }
 
-async function runPostCommand(cmd) {
+async function linkShared() {
+  if (settings.sharedFolder || settings.sharedFile) {
+    if (!dirExists(path.join(getPath(), 'shared')) && !createDir(path.join(getPath(), 'shared'))) {
+      console.log('Error setting up shared folders')
+      process.exit(1)
+    }
+    if (settings.sharedFolder) {
+      for (const sharedFolder of settings.sharedFolder) {
+        if (dirExists(path.join(settings.path, 'shared', sharedFolder)) ||
+          createDir(path.join(settings.path, 'shared', sharedFolder))) {
+          try {
+            fs.symlinkSync(
+              path.resolve(path.join(settings.path, 'shared', sharedFolder)),
+              path.join(settings.path, settings.releasesFolder,
+                settings.release, sharedFolder),
+              'dir'
+            )
+          } catch (error) {
+            console.log(error)
+            process.exit(1)
+          }
+        } else {
+          console.log(
+            "Error shared folder doesn't exist or not a folder or symlink")
+          process.exit(1)
+        }
+      }
+    }
+
+    if (settings.sharedFile) {
+      for (const sharedFile of settings.sharedFile) {
+        console.log(sharedFile)
+        try {
+          let dir = path.parse(sharedFile).dir
+          if (fs.pathExistsSync(path.join(settings.path, 'shared', sharedFile))) {
+            fs.ensureDirSync(path.join(getNewReleasePath(), dir))
+            console.log("Created:", path.join(getNewReleasePath(), dir))
+            fs.symlinkSync(
+              path.resolve(path.join(settings.path, 'shared', sharedFile)),
+              path.join(getNewReleasePath(), sharedFile),
+              'file'
+            )
+          } else {
+            console.log("Shared file doesn't exist:", path.join(settings.path, 'shared', sharedFile))
+          }
+        } catch (error) {
+          console.log(error)
+          process.exit(1)
+        }
+      }
+    }
+  }
+}
+
+async function runPostCommand() {
   try {
-    const command = execSync(cmd, {
-      cwd: getNewReleasePath(),
-      stdio: 'inherit'
-    })
+    if (settings.postCommand) {
+      for (const cmd of settings.postCommand) {
+        console.log('Executing post command: ', cmd)
+        const command = execSync(cmd, {
+          cwd: getNewReleasePath(),
+          stdio: 'inherit'
+        })
+      }
+    }
   } catch(error) {
     console.log(error)
     process.exit(1)
@@ -170,8 +245,8 @@ let saveAssetQueue = queue(async function(task, callback) {
         console.log('Downloading Asset:', task.target)
       }
       const save = await pipe(
-          got.stream(task.url, {timeout: settings.queryTimeout}),
-          fs.createWriteStream(targetFile)
+        got.stream(task.url, {timeout: settings.queryTimeout}),
+        fs.createWriteStream(targetFile)
       ).on('error', function (err, val) {
         console.error('Pipeline failed.', err.message)
         process.exit(1)
@@ -193,6 +268,7 @@ module.exports =  {
   getCurrentReleasePath,
   getNewReleasePath,
   getPath,
+  linkShared,
   runPostCommand,
   saveAssetQueue
 }

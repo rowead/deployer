@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const settings = require('./args')
-const {cleanUp, createRelease, runPostCommand} = require('./utils')
+const {cleanUp, createRelease, linkShared, runPostCommand} = require('./utils')
 
 // @TODO: check for existence of file first
 // Load deployment module
@@ -17,11 +17,8 @@ process.on('exit', cleanUp);
   try {
     await createRelease()
     await deploy()
-    if (settings.postCommand) {
-      for (const cmd of settings.postCommand) {
-        await runPostCommand(cmd)
-      }
-    }
+    await linkShared()
+    await runPostCommand()
     // If we reach this line it was a successful release
     process.exit(0)
   } catch (error) {

@@ -85,6 +85,10 @@ const argv = require('yargs')
     description: 'Folder to store releases',
     hidden: true
   })
+  .option('shared-file', {
+    describe: 'Shared file path (capistrano like git deploys)',
+    type: 'array'
+  })
   .option('shared-folder', {
     describe: 'Shared folder name (capistrano like git deploys)',
     type: 'array'

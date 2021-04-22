@@ -46,7 +46,7 @@ Symlinks will be created within the current release and the contents of those fo
 This is typically used to deploy large asset files outside of git or to allow persistent files created from within
 your app.
 
-Shared files will only be linked to if they exist withing the "shared" folder. They can be within a folder that is in the source but should really be an ignored file and the file itself should not exist in the source. Folders in the path will be created if they do not already exist in the release.
+Shared files will only be linked to if they exist withing the "shared" folder. They can be within a folder that is in the source but **should really be an ignored file and the file itself should not exist in the source**. Folders in the path will be created if they do not already exist in the release.
 
 For the above example, you would set apache's document root to /var/www/html/deployment/current and if you used the argument
 "--shared-folder=foo", it would be available at http://localhost/foo

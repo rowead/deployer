@@ -2,7 +2,7 @@ const { execSync } = require('child_process')
 const fs = require('fs-extra')
 const path = require('path')
 const settings = require('./args')
-const {currentReleaseExists, getCurrentReleasePath, getNewReleasePath} = require('./utils')
+const {dirExists, currentReleaseExists, getCurrentReleasePath, getNewReleasePath} = require('./utils')
 
 /**
  *
@@ -20,6 +20,11 @@ async function deploy(local = false) {
         {
           preserveTimestamps: true
         })
+      // Probably not the best way but this stops errors when switching from git to s3 deployment
+      // aws s3 sync fails to delete git files.
+      if (dirExists(path.join(getNewReleasePath(), '.git'))) {
+        fs.removeSync(path.join(getNewReleasePath(), '.git'))
+      }
     } catch(e) {
       console.log('Failed to copy current release.')
       console.log(e)

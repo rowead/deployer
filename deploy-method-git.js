@@ -11,11 +11,9 @@ async function initRepo(repoUrl) {
     const clone = await git.clone(
       repoUrl,
       path.join(getPath(), 'repo'),
-      {
-        '--bare': true,
-        '--no-single-branch': true,
-        '--depth': 1
-      }
+      [
+        '--mirror'
+      ]
     )
   } catch (error) {
     console.log('Error cloning repo')
@@ -52,7 +50,7 @@ async function deploy(local = false) {
     }
 
     try {
-      await gitRepo.fetch(['--all', '--tags'])
+      await gitRepo.fetch()
       let gitBranch = settings.gitBranch
       if (semver.validRange(gitBranch)) {
         let tags = await gitRepo.tags()

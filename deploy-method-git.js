@@ -28,10 +28,12 @@ async function deploy(local = false) {
   }
   let repoUrl = `https://${auth}${settings.gitRepo}`
   let gitRepo
+  let repoNewOrChanged = false
   try {
     if (!fs.existsSync(path.join(getPath(), 'repo'))) {
       console.log('repo folder does not exist')
       await initRepo(repoUrl)
+      repoNewOrChanged = true
       gitRepo = simpleGit(path.join(getPath(), 'repo'))
     } else {
       try {
@@ -41,6 +43,8 @@ async function deploy(local = false) {
           console.log(`repo changed from ${originUrl.trim()} to ${repoUrl}`)
           fs.rmdirSync(path.join(getPath(), 'repo'), { recursive: true })
           await initRepo(repoUrl)
+          repoNewOrChanged = true
+          gitRepo = simpleGit(path.join(getPath(), 'repo'))
         }
       } catch (error) {
         console.log('Error changing repo URL')
@@ -62,13 +66,13 @@ async function deploy(local = false) {
           console.log('semver chosen:', gitBranch)
         }
       }
-      if (!settings.force) {
+      if (!settings.force && !repoNewOrChanged) {
         if (currentReleaseExists()) {
+          console.log('Checking if there is anything to deploy')
           const currentRepo = simpleGit(getCurrentReleasePath())
           if (await currentRepo.cwd(getCurrentReleasePath()).checkIsRepo()) {
             const tag = await currentRepo.tag(['--points-at'])
-            console.log('tag:')
-            console.log(tag)
+            console.log('current tag:', tag)
             if (gitBranch === tag.trim()) {
               console.log('no update needed')
               process.exit(2)

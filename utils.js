@@ -8,14 +8,25 @@ const path = require('path')
 const queue = require('async/queue')
 
 async function cleanUp(code) {
-  if (code === 0) {
-    console.log('Success')
-    // update current release
-    cleanupReleases(false)
-  } else {
-    console.log('Failed')
-    // remove release folder
-    cleanupReleases(true)
+  switch (code) {
+    case 0:
+      console.log('Success')
+      // update current release
+      cleanupReleases(false)
+      break;
+    case 1:
+      console.log('Failed')
+      // remove release folder
+      cleanupReleases(true)
+      break;
+    case 2:
+      console.log('Nothing to deploy')
+      // remove release folder
+      cleanupReleases(true)
+      break;
+    default:
+      console.log("Unknown error")
+      cleanupReleases(true)
   }
 }
 

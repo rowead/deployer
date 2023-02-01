@@ -1,6 +1,6 @@
 {
   "name": "Deployer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Atomic Asset and Codebase Deployments",
   "main": "deploy",
   "dependencies": {
@@ -11,12 +11,12 @@
     "lodash": "^4.17.20",
     "moment": "^2.24.0",
     "multipipe": "^4.0.0",
+    "node-downloader-helper": "^2.1.6",
     "object-scan": "^13.0.1",
     "semver": "^7.3.4",
     "simple-git": "^2.35.1",
     "yargs": "^15.4.1"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

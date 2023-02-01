@@ -1,9 +1,9 @@
 const { execSync } = require('child_process')
 const settings = require('./args')
+const { DownloaderHelper } = require('node-downloader-helper')
 const fs = require('fs-extra')
 const got = require('got')
 const _ = require('lodash')
-const pipe = require('multipipe')
 const path = require('path')
 const queue = require('async/queue')
 
@@ -157,7 +157,7 @@ function dirExists(path) {
 }
 
 function getCurrentReleasePath() {
-  return fs.realpathSync(path.resolve(path.join(settings.path, settings.currentFolder)))
+  return path.join(settings.path, settings.currentFolder)
 }
 
 function getNewReleasePath() {
@@ -255,13 +255,34 @@ let saveAssetQueue = queue(async function(task, callback) {
       if (settings.debug === true) {
         console.log('Downloading Asset:', task.target)
       }
-      const save = await pipe(
-        got.stream(task.url, {timeout: settings.queryTimeout}),
-        fs.createWriteStream(targetFile)
-      ).on('error', function (err, val) {
-        console.error('Pipeline failed.', err.message)
-        process.exit(1)
-      })
+      const dl = new DownloaderHelper(task.url, path.dirname(targetFile), {
+        method: 'GET',
+        fileName: filename => `${path.basename(targetFile)}`,
+        retry: { maxRetries: 5, delay: 3000 },
+        timeout: 6000
+      });
+
+      dl.on('error', (err) => {
+        console.error('Something happened', err);
+        process.exit(1);
+      });
+
+      if (settings.debug === true) {
+        dl
+        .on('end', downloadInfo => console.log('Download Completed: ', downloadInfo))
+        .on('retry', (attempt, opts, err) => {
+          console.log({
+            RetryAttempt: `${attempt}/${opts.maxRetries}`,
+            StartsOn: `${opts.delay / 1000} secs`,
+            Reason: err ? err.message : 'unknown'
+          });
+        })
+        .on('resume', isResumed => {
+          console.log('Resuming');
+        });
+      }
+
+      await dl.start();
     }
   } catch (error) {
     console.log(error)
